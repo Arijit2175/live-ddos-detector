@@ -75,4 +75,24 @@ def pcap_read(pcap_path):
         row = pkt_to_row(pkt)
         write_row(row)
 
-  
+def main():
+    parser = argparse.ArgumentParser(description="Real packet capture -> data/traffic_log.csv")
+    parser.add_argument("--iface", "-i", help="Interface to sniff (e.g., lo, eth0). Required for live capture.")
+    parser.add_argument("--pcap", "-p", help="Read from pcap file instead of live capture")
+    parser.add_argument("--filter", "-f", help="BPF filter (e.g., 'tcp or udp')", default=None)
+    parser.add_argument("--count", "-c", type=int, help="Number of packets to capture (0 = unlimited)", default=0)
+    args = parser.parse_args()
+
+    ensure_outfile()
+
+    if args.pcap:
+        pcap_read(args.pcap)
+    else:
+        if not args.iface:
+            print("Error: provide --iface for live capture, or use --pcap <file>")
+            parser.print_help()
+            sys.exit(1)
+        live_sniff(args.iface, args.count, args.filter)
+
+if __name__ == "__main__":
+    main()
