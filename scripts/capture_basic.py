@@ -43,3 +43,8 @@ def pkt_to_row(pkt):
             row["protocol"] = "IP"
     return row
 
+def write_row(row):
+    with open(OUT_FILE, "a", newline="") as f:
+        writer = csv.DictWriter(f, fieldnames=CSV_FIELDS)
+        writer.writerow(row)
+
