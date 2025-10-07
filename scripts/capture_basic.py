@@ -64,4 +64,15 @@ def live_sniff(iface, count, filter_expr):
         print("Live sniff error:", e)
         sys.exit(1)
 
-    
+def pcap_read(pcap_path):
+    if not os.path.exists(pcap_path):
+        print("PCAP file not found:", pcap_path)
+        sys.exit(1)
+    print(f"[+] Reading pcap file: {pcap_path}")
+    pkts = rdpcap(pcap_path)
+    print(f"[+] {len(pkts)} packets found. Writing metadata to {OUT_FILE}")
+    for pkt in pkts:
+        row = pkt_to_row(pkt)
+        write_row(row)
+
+  
