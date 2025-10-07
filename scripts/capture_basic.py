@@ -4,12 +4,17 @@ import os
 import random
 from datetime import datetime
 
+try:
+    for scapy.all import sniff, rdpcap, IP, TCP, UDP, ICMP
+except Exception as e:
+    print("Scapy failed to import")
+    raise
+
 OUT_DIR = "data"
 OUT_FILE = os.path.join(OUT_DIR, "traffic_log.csv")
+CSV_fields = ['timestamp', 'src_ip', 'dst_ip', 'protocol', 'length']
 
 os.makedirs(OUT_DIR, exist_ok=True)
-
-fields = ['timestamp', 'src_ip', 'dst_ip', 'protocol', 'length']
 
 ips = ["192.168.1.2", "192.168.1.10", "10.0.0.5", "127.0.0.1"]
 protocols = ["TCP", "UDP", "ICMP"] 
