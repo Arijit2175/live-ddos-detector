@@ -5,7 +5,7 @@ import random
 from datetime import datetime
 
 try:
-    for scapy.all import sniff, rdpcap, IP, TCP, UDP, ICMP
+    from scapy.all import sniff, rdpcap, IP, TCP, UDP, ICMP
 except Exception as e:
     print("Scapy failed to import")
     raise
