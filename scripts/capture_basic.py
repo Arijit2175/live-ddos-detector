@@ -20,3 +20,26 @@ def ensure_outfile():
         with open(OUT_FILE, "w", newline="") as f:
             writer = csv.DictWriter(f, fieldnames=CSV_FIELDS)
             writer.writeheader()
+
+def pkt_to_row(pkt):
+    row = {
+        "timestamp": datetime.utcnow().isoformat() + "Z",
+        "src_ip": None,
+        "dst_ip": None,
+        "protocol": "OTHER",
+        "length": len(pkt) if hasattr(pkt, "__len__") else 0
+    }
+    if IP in pkt:
+        ip = pkt[IP]
+        row["src_ip"] = ip.src
+        row["dst_ip"] = ip.dst
+        if TCP in pkt:  
+            row["protocol"] = "TCP"
+        elif UDP in pkt:
+            row["protocol"] = "UDP"
+        elif ICMP in pkt:
+            row["protocol"] = "ICMP"
+        else:
+            row["protocol"] = "IP"
+    return row
+
