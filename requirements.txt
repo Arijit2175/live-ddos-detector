@@ -1,0 +1,9 @@
+fastapi
+uvicorn
+scapy
+geoip2
+scikit-learn
+joblib
+pandas
+numpy
+requests
