@@ -48,3 +48,7 @@ def write_row(row):
         writer = csv.DictWriter(f, fieldnames=CSV_FIELDS)
         writer.writerow(row)
 
+def process_live(pkt):
+    row = pkt_to_row(pkt)
+    write_row(row)
+
