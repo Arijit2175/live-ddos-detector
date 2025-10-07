@@ -52,3 +52,16 @@ def process_live(pkt):
     row = pkt_to_row(pkt)
     write_row(row)
 
+def live_sniff(iface, count, filter_expr):
+    print(f"[+] Starting live capture on iface='{iface}' filter='{filter_expr}' count={count}")
+    print("    Press Ctrl-C to stop.")
+    try:
+        sniff(iface=iface, prn=process_live, store=False, count=count if count>0 else 0, filter=filter_expr)
+    except PermissionError:
+        print("Permission error: live sniffing usually requires sudo/root.")
+        sys.exit(1)
+    except Exception as e:
+        print("Live sniff error:", e)
+        sys.exit(1)
+
+    
