@@ -37,3 +37,23 @@ def udp_worker(target, port, pkts, payload, delay, dry_run, stats, tid):
     s.close()
     return sent
 
+def tcp_worker(target, port, pkts, payload, delay, dry_run, stats, tid):
+    sent = 0
+    for i in range(pkts):
+        if dry_run:
+            pass
+        else:
+            try:
+                s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+                s.settimeout(1.0)
+                s.connect((target, port))
+                s.sendall(payload)
+                s.close()
+            except Exception:
+                pass
+        sent += 1
+        stats["sent"] += 1
+        if delay:
+            time.sleep(delay)
+    return sent
+

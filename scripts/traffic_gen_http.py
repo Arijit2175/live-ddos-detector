@@ -27,7 +27,7 @@ def is_local_target(url):
         return False
     
 def worker(url, n_requests, delay, timeout, dry_run, stats, thread_id):
-    sent = 0;
+    sent = 0
     for i in range(n_requests):
         if dry_run:
             print(f"[DRY] thread {thread_id} would GET {url}")
