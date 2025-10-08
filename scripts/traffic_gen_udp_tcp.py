@@ -19,3 +19,21 @@ def is_localhost(addr):
     except Exception:
         return False
     
+def udp_worker(target, port, pkts, payload, delay, dry_run, stats, tid):
+    s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+    sent = 0
+    for i in range(pkts):
+        if dry_run:
+            pass
+        else:
+            try:
+                s.sendto(payload, (target, port))
+            except Exception:
+                pass
+        sent += 1
+        stats["sent"] += 1
+        if delay:
+            time.sleep(delay)
+    s.close()
+    return sent
+
