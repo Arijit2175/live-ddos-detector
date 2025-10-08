@@ -42,4 +42,53 @@ def worker(url, n_requests, delay, timeout, dry_run, stats, thread_id):
             time.sleep(delay)
     return sent
 
+def main():
+    parser = argparse.ArgumentParser(description="Safe HTTP generator (localhost only by default)")
+    parser.add_argument("--url", required=True, help="Target URL (use http://127.0.0.1:8000/ for local)")
+    parser.add_argument("--threads", type=int, default=DEFAULT_THREADS)
+    parser.add_argument("--requests", dest="requests_per_thread", type=int, default=DEFAULT_REQS)
+    parser.add_argument("--delay", type=float, default=DEFAULT_DELAY)
+    parser.add_argument("--timeout", type=float, default=DEFAULT_TIMEOUT)
+    parser.add_argument("--max-packets", type=int, default=DEFAULT_MAX_PACKETS, help="Global cap on number of requests")
+    parser.add_argument("--dry-run", action="store_true", help="Show actions without sending requests")
+    parser.add_argument("--allow-remote", action="store_true", help="Allow non-localhost targets (dangerous)")
+    args = parser.parse_args()
 
+    if not args.allow_remote and not is_local_target(args.url):
+        print("ERROR: Target is not localhost. Use --allow-remote to override (not recommended).")
+        sys.exit(1)
+
+    total_planned = args.threads * args.requests_per_thread
+    if total_planned > args.max_packets:
+        per_thread = max(1, args.max_packets // args.threads)
+        print(f"Planned {total_planned} > max {args.max_packets}. Reducing requests/thread -> {per_thread}")
+        args.requests_per_thread = per_thread
+
+    print(f"Starting safe HTTP generator -> url={args.url} threads={args.threads} reqs/thread={args.requests_per_thread} delay={args.delay}")
+    if args.dry_run:
+        print("DRY RUN: no network traffic will be sent.")
+
+    if not args.dry_run:
+        confirm = input("Type 'y' to start, anything else to abort: ").strip().lower()
+    if confirm != "y" and not args.dry_run:
+        print("Aborted by user.")
+        sys.exit(0)
+
+    stats = Counter()
+    threads = []
+    start = time.time()
+    for i in range(args.threads):
+        t = threading.Thread(target=worker, args=(args.url, args.requests_per_thread, args.delay, args.timeout, args.dry_run, stats, i), daemon=True)
+        threads.append(t)
+        t.start()
+
+    try:
+        for t in threads:
+            t.join()
+    except KeyboardInterrupt:
+        print("Interrupted by user.")
+    duration = time.time() - start
+    print(f"Done. Sent (or planned) {stats['sent']} requests in {duration:.2f}s")
+
+if __name__ == "__main__":
+    main()
