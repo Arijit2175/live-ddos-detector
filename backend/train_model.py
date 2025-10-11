@@ -8,3 +8,10 @@ import os
 DATA_FILE = "data/features.csv"
 MODEL_FILE = "models/ddos_model.joblib"
 
+def load_data():
+    df = pd.read_csv(DATA_FILE)
+    print(f"[*] Loaded {len(df)} windows from {DATA_FILE}")
+    df["label"] = ((df["pkts"] > 200) | (df["unique_srcs"] > 50)).astype(int)
+    print("[*] Label distribution:\n", df["label"].value_counts())
+    return df
+
