@@ -1,0 +1,2 @@
+window_start,window_end,pkts,bytes,avg_pkt_size,unique_srcs,unique_dsts,tcp_ratio,udp_ratio,icmp_ratio,entropy_src
+2025-10-09T04:12:15+00:00,2025-10-09T04:12:20+00:00,82,4100,50.0,1,1,1.0,0.0,0.0,0.0
