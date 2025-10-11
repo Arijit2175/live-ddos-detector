@@ -1,19 +1,19 @@
 import argparse
 import csv
 import os
-import random
 import sys
 from datetime import datetime
 
 try:
-    from scapy.all import sniff, rdpcap, IP, TCP, UDP, ICMP
+    from scapy.all import sniff, rdpcap, IP, TCP, UDP, ICMP, conf
 except Exception as e:
-    print("Scapy failed to import")
-    raise
+    print("Scapy failed to import:", e)
+    sys.exit(1)
 
 OUT_DIR = "data"
 OUT_FILE = os.path.join(OUT_DIR, "traffic_log.csv")
 CSV_FIELDS = ['timestamp', 'src_ip', 'dst_ip', 'protocol', 'length']
+
 
 def ensure_outfile():
     os.makedirs(OUT_DIR, exist_ok=True)
@@ -21,6 +21,7 @@ def ensure_outfile():
         with open(OUT_FILE, "w", newline="") as f:
             writer = csv.DictWriter(f, fieldnames=CSV_FIELDS)
             writer.writeheader()
+
 
 def pkt_to_row(pkt):
     row = {
@@ -34,7 +35,7 @@ def pkt_to_row(pkt):
         ip = pkt[IP]
         row["src_ip"] = ip.src
         row["dst_ip"] = ip.dst
-        if TCP in pkt:  
+        if TCP in pkt:
             row["protocol"] = "TCP"
         elif UDP in pkt:
             row["protocol"] = "UDP"
@@ -44,26 +45,47 @@ def pkt_to_row(pkt):
             row["protocol"] = "IP"
     return row
 
+
 def write_row(row):
     with open(OUT_FILE, "a", newline="") as f:
         writer = csv.DictWriter(f, fieldnames=CSV_FIELDS)
         writer.writerow(row)
 
+
 def process_live(pkt):
     row = pkt_to_row(pkt)
     write_row(row)
 
-def live_sniff(iface, count, filter_expr):
-    print(f"[+] Starting live capture on iface='{iface}' filter='{filter_expr}' count={count}")
-    print("    Press Ctrl-C to stop.")
+
+def get_default_iface():
+    """Try to auto-select a likely active interface on Windows."""
     try:
-        sniff(iface=iface, prn=process_live, store=False, count=count if count>0 else 0, filter=filter_expr)
+        iface = conf.iface
+        print(f"[*] Auto-detected default interface: {iface}")
+        return iface
+    except Exception:
+        return None
+
+
+def live_sniff(iface, count, timeout, filter_expr):
+    print(f"[+] Starting live capture on iface='{iface}' filter='{filter_expr}' count={count} timeout={timeout}s")
+    print("    Press Ctrl-C to stop early.")
+    try:
+        sniff(
+            iface=iface,
+            prn=process_live,
+            store=False,
+            count=count if count > 0 else 0,
+            filter=filter_expr,
+            timeout=timeout
+        )
     except PermissionError:
-        print("Permission error: live sniffing usually requires sudo/root.")
+        print("Permission error: live sniffing usually requires admin privileges.")
         sys.exit(1)
     except Exception as e:
         print("Live sniff error:", e)
         sys.exit(1)
+
 
 def pcap_read(pcap_path):
     if not os.path.exists(pcap_path):
@@ -76,12 +98,14 @@ def pcap_read(pcap_path):
         row = pkt_to_row(pkt)
         write_row(row)
 
+
 def main():
-    parser = argparse.ArgumentParser(description="Real packet capture -> data/traffic_log.csv")
-    parser.add_argument("--iface", "-i", help="Interface to sniff (e.g., lo, eth0). Required for live capture.")
-    parser.add_argument("--pcap", "-p", help="Read from pcap file instead of live capture")
+    parser = argparse.ArgumentParser(description="Capture network packets to data/traffic_log.csv")
+    parser.add_argument("--iface", "-i", help="Interface to sniff (optional on Windows)")
+    parser.add_argument("--pcap", "-p", help="Read from existing pcap file instead of live capture")
     parser.add_argument("--filter", "-f", help="BPF filter (e.g., 'tcp or udp')", default=None)
     parser.add_argument("--count", "-c", type=int, help="Number of packets to capture (0 = unlimited)", default=0)
+    parser.add_argument("--timeout", "-t", type=int, help="Stop capture after N seconds", default=None)
     args = parser.parse_args()
 
     ensure_outfile()
@@ -89,11 +113,12 @@ def main():
     if args.pcap:
         pcap_read(args.pcap)
     else:
-        if not args.iface:
-            print("Error: provide --iface for live capture, or use --pcap <file>")
-            parser.print_help()
+        iface = args.iface or get_default_iface()
+        if not iface:
+            print("Error: Could not auto-detect interface. Please use --iface <name>")
             sys.exit(1)
-        live_sniff(args.iface, args.count, args.filter)
+        live_sniff(iface, args.count, args.timeout, args.filter)
+
 
 if __name__ == "__main__":
     main()
