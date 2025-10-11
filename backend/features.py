@@ -72,3 +72,25 @@ def build_features(df, window_seconds=5):
     feat_df = feat_df.sort_values('window_start').reset_index(drop=True)
     return feat_df
 
+def main():
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--input', default='data/traffic_log.csv', help='Input CSV of raw packets')
+    parser.add_argument('--out', default='data/features.csv', help='Output CSV for features')
+    parser.add_argument('--window', type=int, default=5, help='Window size in seconds (integer)')
+    args = parser.parse_args()
+
+    print("[*] Reading:", args.input)
+    df = pd.read_csv(args.input)
+    if 'timestamp' not in df.columns:
+        raise SystemExit("Input CSV must have 'timestamp' column")
+
+    print(f"[*] Rows loaded: {len(df)}")
+    feat_df = build_features(df, window_seconds=args.window)
+
+    print(f"[*] Windows produced: {len(feat_df)}")
+    feat_df.to_csv(args.out, index=False)
+    print("[*] Wrote features to:", args.out)
+    print(feat_df.head(10).to_string(index=False))
+
+if __name__ == '__main__':
+    main()
