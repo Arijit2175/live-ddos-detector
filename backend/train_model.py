@@ -38,3 +38,10 @@ def train_model(df):
     print(f"[*] Model saved to {MODEL_FILE}")
     return model
 
+def main():
+    df = load_data()
+    model = train_model(df)
+    print("[*] Training complete.")
+
+if __name__ == "__main__":
+    main()
