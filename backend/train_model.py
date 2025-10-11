@@ -5,3 +5,6 @@ from sklearn.metrics import classification_report
 import joblib
 import os
 
+DATA_FILE = "data/features.csv"
+MODEL_FILE = "models/ddos_model.joblib"
+
