@@ -24,3 +24,7 @@ def stream_alerts():
             print("[server] stream error:", e)
             time.sleep(1)
 
+@app.route("/stream")
+def stream():
+    return Response(stream_alerts(), mimetype="text/event-stream")
+
