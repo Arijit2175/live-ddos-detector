@@ -66,4 +66,13 @@
   const totalEl = document.getElementById('total');
   const info = document.getElementById('info');
 
+  function addAlertItem(alert){
+    totalAlerts++;
+    totalEl.textContent = totalAlerts;
+    const li = document.createElement('li');
+    li.textContent = `${alert.detected_at} | pkts=${alert.pkts} prob=${alert.probability}`;
+    alertsList.insertBefore(li, alertsList.firstChild);
+    while(alertsList.childNodes.length > 50) alertsList.removeChild(alertsList.lastChild);
+  }
+
   
