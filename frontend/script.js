@@ -112,4 +112,24 @@
   }
   connectSSE();
 
-  
+  async function preload(){
+    try {
+      const r = await fetch('/api/alerts');
+      const arr = await r.json();
+      for(const a of arr.slice(-100)){
+        totalAlerts++;
+        addAlertItem(a);
+        if(a.top_srcs){
+          for(const ip of Object.keys(a.top_srcs)){
+            geolocateIP(ip).then(()=>{  });
+          }
+        }
+      }
+      totalEl.textContent = totalAlerts;
+    } catch(e){
+      console.warn("preload failed", e);
+    }
+  }
+  preload();
+
+})();
