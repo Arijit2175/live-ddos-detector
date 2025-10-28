@@ -20,12 +20,12 @@
     .arcDashLength(0.45)
     .arcDashGap(0.7)
     .arcDashAnimateTime(1500)
-    .arcStroke(0.9);
+    .arcStroke(1.2);
 
   scene.add(Globe);
 
   const ambientLight = new THREE.AmbientLight(0xffffff, 1.1);
-  const pointLight = new THREE.PointLight(0xffffff, 1.5);
+  const pointLight = new THREE.PointLight(0xffffff, 1.6);
   camera.add(pointLight);
   scene.add(ambientLight);
   scene.add(camera);
@@ -37,7 +37,7 @@
   });
 
   (function animate() {
-    Globe.rotation.y += 0.0015;
+    Globe.rotation.y += 0.0008; 
     renderer.render(scene, camera);
     requestAnimationFrame(animate);
   })();
@@ -91,18 +91,15 @@
         startLng: geo.lng,
         endLat: 0,
         endLng: 0,
-        color: alert.predicted_label == 1 ? 'rgba(255,60,60,0.9)' : 'rgba(60,180,90,0.8)',
-        weight: Math.min(8, Math.log((top[ip] || 1) + 1))
+        color: alert.predicted_label == 1 ? 'rgba(255,80,80,0.9)' : 'rgba(60,180,90,0.8)',
+        weight: Math.min(12, Math.log((top[ip] || 1) + 1))
       });
     }
 
     if (arcsToAdd.length) {
       const existing = Globe.arcsData() || [];
-      Globe.arcsData(existing.concat(arcsToAdd));
-
-      setTimeout(() => {
-        Globe.arcsData(Globe.arcsData().slice(-200));
-      }, 5000);
+      const newArcs = existing.concat(arcsToAdd);
+      Globe.arcsData(newArcs.slice(-300)); 
     }
   }
 
