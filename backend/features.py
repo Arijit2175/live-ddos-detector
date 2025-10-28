@@ -79,19 +79,24 @@ def build_features(df, window_seconds=5):
 
 def main():
     parser = argparse.ArgumentParser()
-    parser.add_argument('--input', required=True, help='Input PCAP file')
+    parser.add_argument('--input', default='data/traffic_log.csv', help='Input CSV of raw packets')
     parser.add_argument('--out', default='data/features.csv', help='Output CSV for features')
-    parser.add_argument('--window', type=int, default=5, help='Window size in seconds')
+    parser.add_argument('--window', type=int, default=5, help='Window size in seconds (integer)')
     args = parser.parse_args()
 
-    print(f"[*] Reading PCAP: {args.input}")
-    df = parse_pcap_to_dataframe(args.input)
-    print(f"[*] Packets parsed: {len(df)}")
+    print("[*] Reading:", args.input)
 
+    df = pd.read_csv(args.input)
+
+    if 'timestamp' not in df.columns:
+        raise SystemExit("Input CSV must have 'timestamp' column")
+
+    print(f"[*] Rows loaded: {len(df)}")
     feat_df = build_features(df, window_seconds=args.window)
-    feat_df.to_csv(args.out, index=False)
 
-    print(f"[*] Features saved to: {args.out}")
+    print(f"[*] Windows produced: {len(feat_df)}")
+    feat_df.to_csv(args.out, index=False)
+    print("[*] Wrote features to:", args.out)
     print(feat_df.head(10).to_string(index=False))
 
 if __name__ == '__main__':
