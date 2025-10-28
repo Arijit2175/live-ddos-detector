@@ -75,4 +75,26 @@
     while(alertsList.childNodes.length > 50) alertsList.removeChild(alertsList.lastChild);
   }
 
+  async function handleAlert(alert){
+    addAlertItem(alert);
+    const top = alert.top_srcs || {};
+    const arcsToAdd = [];
+    for(const ip of Object.keys(top)){
+      const geo = await geolocateIP(ip);
+      if(!geo) continue;
+      arcsToAdd.push({
+        startLat: geo.lat,
+        startLng: geo.lng,
+        endLat: 0,
+        endLng: 0,
+        color: alert.predicted_label==1 ? 'rgba(255,60,60,0.8)' : 'rgba(80,200,120,0.7)',
+        weight: Math.min(10, Math.log( (top[ip]||1) + 1))
+      });
+    }
+    if(arcsToAdd.length){
+      const existing = Globe.arcsData() || [];
+      Globe.arcsData(existing.concat(arcsToAdd));
+    }
+  }
+
   
