@@ -1,0 +1,15 @@
+* { box-sizing: border-box; }
+body {
+  margin: 0;
+  font-family: Inter, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;
+  background: linear-gradient(180deg,#071428 0%, #041022 100%);
+  color: #e6eef8;
+}
+header { padding: 12px 20px; display:flex; justify-content:space-between; align-items:center;}
+h1 { margin:0; font-size:1.1rem; }
+main { display:flex; height: calc(100vh - 70px); }
+#globe-container { flex:1; }
+#panel { width:320px; padding: 12px; background: rgba(0,0,0,0.2); border-left:1px solid rgba(255,255,255,0.03); overflow:auto;}
+#alerts-list { list-style:none; padding:0; margin:8px 0 0 0; font-size:0.9rem;}
+#alerts-list li { margin-bottom:8px; padding:8px; border-radius:6px; background: rgba(255,255,255,0.03); }
+#info { font-size:0.9rem; color:#9fb7d9; }
