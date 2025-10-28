@@ -13,4 +13,17 @@
   renderer.setSize(container.clientWidth, container.clientHeight);
   container.appendChild(renderer.domElement);
 
+  const Globe = new ThreeGlobe({
+    animateIn: true
+  })
+  .globeImageUrl('//unpkg.com/three-globe/example/img/earth-night.jpg')
+  .arcsData([])
+  .arcColor('color')
+  .arcDashLength(0.4)
+  .arcDashGap(0.6)
+  .arcDashAnimateTime(2000)
+  .arcStroke(0.8);
+
+  scene.add(Globe);
+
   
