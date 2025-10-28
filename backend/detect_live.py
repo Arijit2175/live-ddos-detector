@@ -93,3 +93,9 @@ def monitor_and_detect(model):
 
         time.sleep(POLL_INTERVAL)
 
+def main():
+    model = load_model()
+    monitor_and_detect(model)
+
+if __name__ == "__main__":
+    main()
