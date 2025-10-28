@@ -38,4 +38,25 @@
     requestAnimationFrame(animate);
   })();
 
-  
+   const geoCacheKey = "ip_geo_cache_v1";
+  let ipGeoCache = {};
+  try { ipGeoCache = JSON.parse(localStorage.getItem(geoCacheKey) || "{}"); } catch(e){ ipGeoCache = {}; }
+
+  async function geolocateIP(ip){
+    if(!ip) return null;
+    if(ipGeoCache[ip]) return ipGeoCache[ip];
+    try {
+      const r = await fetch(`https://ipapi.co/${ip}/json/`);
+      if(!r.ok) throw new Error("geo fail");
+      const j = await r.json();
+      if(j && j.latitude && j.longitude){
+        const obj = { lat: j.latitude, lng: j.longitude, city: j.city || "", country: j.country_name || "" };
+        ipGeoCache[ip] = obj;
+        try { localStorage.setItem(geoCacheKey, JSON.stringify(ipGeoCache)); } catch(e){}
+        return obj;
+      }
+    } catch(e){
+      return null;
+    }
+    return null;
+  }
