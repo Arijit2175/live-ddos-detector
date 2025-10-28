@@ -32,4 +32,10 @@
     camera.updateProjectionMatrix();
   });
 
+  (function animate(){
+    Globe.rotation.y += 0.002;
+    renderer.render(scene, camera);
+    requestAnimationFrame(animate);
+  })();
+
   
