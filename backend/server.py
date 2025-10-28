@@ -45,3 +45,7 @@ def api_alerts():
 def static_proxy(path):
     return send_from_directory(app.static_folder, path)
 
+if __name__ == "__main__":
+    port = int(os.environ.get("PORT", 8000))
+    print(f"Serving web dashboard on http://127.0.0.1:{port}")
+    app.run(host="127.0.0.1", port=port, debug=False, threaded=True)
