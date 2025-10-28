@@ -40,3 +40,8 @@ def api_alerts():
                     pass
     return jsonify(arr[-200:])
 
+@app.route("/", defaults={"path": "index.html"})
+@app.route("/<path:path>")
+def static_proxy(path):
+    return send_from_directory(app.static_folder, path)
+
