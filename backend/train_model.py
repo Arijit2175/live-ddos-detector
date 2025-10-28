@@ -22,8 +22,12 @@ def train_model(df):
     X = df[features]
     y = df["label"]
 
-    X_train, X_test, y_train, y_test = train_test_split(
-        X, y, test_size=0.3, random_state=42, stratify=y
+    if len(df['label'].unique()) < 2 or df['label'].value_counts().min() < 2:
+        print("[!] Not enough samples per class — training on full dataset without test split")
+        X_train, X_test, y_train, y_test = X, X, y, y
+    else:
+        X_train, X_test, y_train, y_test = train_test_split(
+            X, y, test_size=0.2, stratify=y, random_state=42
     )
 
     model = RandomForestClassifier(n_estimators=100, random_state=42)
