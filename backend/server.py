@@ -1,10 +1,13 @@
 from flask import Flask, Response, send_from_directory, jsonify
-import time, json, os
+import time, json, os, sys
 from backend.detect_live import start_background_detection
 
 app = Flask(__name__, static_folder="../frontend", static_url_path="/")
 
 ALERTS_FILE = "data/alerts.jsonl"
+
+sys.path.append(os.path.dirname(os.path.abspath(__file__)))
+sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 def stream_alerts():
     last_pos = 0
