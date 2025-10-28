@@ -3,6 +3,7 @@ import pandas as pd
 import joblib
 import json
 import os
+import threading
 from datetime import datetime, timedelta, timezone
 from math import log2
 
@@ -142,6 +143,14 @@ def monitor_and_detect(model):
 
         time.sleep(POLL_INTERVAL)
 
+def start_background_detection():
+    """Start detection without blocking the main thread (used by server.py)."""
+    model = load_model()
+
+    thread = threading.Thread(target=monitor_and_detect, args=(model,), daemon=True)
+    thread.start()
+    print("[server] Background DDoS detection started.")
+    return thread
 
 def main():
     model = load_model()
