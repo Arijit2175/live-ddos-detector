@@ -97,4 +97,19 @@
     }
   }
 
+  function connectSSE(){
+    const sse = new EventSource('/stream');
+    sse.onopen = () => { info.textContent = "Connected to live alerts."; };
+    sse.onerror = (e) => { info.textContent = "SSE error — retrying..."; sse.close(); setTimeout(connectSSE, 2000); };
+    sse.onmessage = e => {
+      try {
+        const data = JSON.parse(e.data);
+        handleAlert(data);
+      } catch(err){
+        console.warn("bad alert", err);
+      }
+    };
+  }
+  connectSSE();
+
   
