@@ -26,4 +26,10 @@
 
   scene.add(Globe);
 
+   window.addEventListener('resize', () => {
+    renderer.setSize(container.clientWidth, container.clientHeight);
+    camera.aspect = container.clientWidth / container.clientHeight;
+    camera.updateProjectionMatrix();
+  });
+
   
