@@ -60,3 +60,10 @@
     }
     return null;
   }
+
+  let totalAlerts = 0;
+  const alertsList = document.getElementById('alerts-list');
+  const totalEl = document.getElementById('total');
+  const info = document.getElementById('info');
+
+  
