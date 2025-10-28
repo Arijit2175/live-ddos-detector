@@ -44,3 +44,52 @@ def compute_window_features(df_window):
         "entropy_src": entropy_src,
     }
 
+def monitor_and_detect(model):
+    print("[*] Starting real-time detection...")
+    last_processed_time = None
+
+    while True:
+        if not os.path.exists(LOG_PATH):
+            print(f"[!] Waiting for {LOG_PATH} ...")
+            time.sleep(POLL_INTERVAL)
+            continue
+
+        df = pd.read_csv(LOG_PATH)
+        if df.empty:
+            time.sleep(POLL_INTERVAL)
+            continue
+
+        df['timestamp'] = pd.to_datetime(df['timestamp'], errors='coerce')
+
+        latest_time = df['timestamp'].max()
+        start_time = latest_time - timedelta(seconds=WINDOW_SECONDS)
+
+        df_window = df[df['timestamp'] >= start_time]
+
+        if last_processed_time is not None and latest_time <= last_processed_time:
+            time.sleep(POLL_INTERVAL)
+            continue
+
+        last_processed_time = latest_time
+
+        feats = compute_window_features(df_window)
+        X = pd.DataFrame([feats])
+        pred = model.predict(X)[0]
+        proba = model.predict_proba(X)[0][1]
+
+        alert = {
+            "timestamp": datetime.utcnow().isoformat() + "Z",
+            "predicted_label": int(pred),
+            "probability": round(float(proba), 4),
+            "window_pkts": feats["pkts"],
+        }
+
+        os.makedirs(os.path.dirname(ALERTS_PATH), exist_ok=True)
+        with open(ALERTS_PATH, "a") as f:
+            f.write(json.dumps(alert) + "\n")
+
+        status = "⚠️  DDoS DETECTED" if pred == 1 else "✅ Normal"
+        print(f"[{alert['timestamp']}] {status} | p={alert['probability']} | pkts={alert['window_pkts']}")
+
+        time.sleep(POLL_INTERVAL)
+
