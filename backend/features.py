@@ -40,7 +40,7 @@ def parse_pcap_to_dataframe(pcap_file):
     return df
 
 def build_features(df, window_seconds=5):
-    df['epoch'] = df['timestamp'].astype('int64') // 1_000_000_000
+    df['epoch'] = pd.to_datetime(df['timestamp']).astype('int64') // 1_000_000_000
     df['window_id'] = (df['epoch'] // window_seconds).astype(int)
 
     records = []
