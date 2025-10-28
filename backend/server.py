@@ -10,7 +10,6 @@ app = Flask(__name__, static_folder="../frontend", static_url_path="/")
 
 ALERTS_FILE = "data/alerts.jsonl"
 
-
 def stream_alerts():
     last_pos = 0
     if not os.path.exists(ALERTS_FILE):
@@ -30,11 +29,9 @@ def stream_alerts():
             print("[server] stream error:", e)
             time.sleep(1)
 
-
 @app.route("/stream")
 def stream():
     return Response(stream_alerts(), mimetype="text/event-stream")
-
 
 @app.route("/api/alerts")
 def api_alerts():
@@ -48,12 +45,10 @@ def api_alerts():
                     pass
     return jsonify(arr[-200:])
 
-
 @app.route("/", defaults={"path": "index.html"})
 @app.route("/<path:path>")
 def static_proxy(path):
     return send_from_directory(app.static_folder, path)
-
 
 if __name__ == "__main__":
     start_background_detection()
