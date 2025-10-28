@@ -8,3 +8,4 @@ venv/
 data/*.pcap
 data/*.db
 .ipynb_checkpoints/
+*.joblib
