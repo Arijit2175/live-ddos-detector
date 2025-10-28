@@ -28,3 +28,15 @@ def stream_alerts():
 def stream():
     return Response(stream_alerts(), mimetype="text/event-stream")
 
+@app.route("/api/alerts")
+def api_alerts():
+    arr = []
+    if os.path.exists(ALERTS_FILE):
+        with open(ALERTS_FILE, "r", encoding="utf-8") as f:
+            for line in f:
+                try:
+                    arr.append(json.loads(line))
+                except:
+                    pass
+    return jsonify(arr[-200:])
+
