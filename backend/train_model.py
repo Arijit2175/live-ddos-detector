@@ -18,7 +18,7 @@ def load_data():
 def train_model(df):
     features = ["pkts", "bytes", "avg_pkt_size",
                 "unique_srcs", "unique_dsts",
-                "tcp_ratio", "udp_ratio", "entropy_src"]
+                "tcp_ratio", "udp_ratio", "icmp_ratio", "entropy_src"]
     X = df[features]
     y = df["label"]
 
