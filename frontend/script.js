@@ -24,6 +24,16 @@
 
   scene.add(Globe);
 
+  Globe.pointsData([])
+       .pointLat(d => d.lat)
+       .pointLng(d => d.lng)
+       .pointColor(d => d.color || 'orange')
+       .pointAltitude(d => d.altitude || 0.02)
+       .pointRadius(0.6);
+
+  const recentMarkers = [];
+  const MARKER_TTL = 6.0; 
+
   const ambientLight = new THREE.AmbientLight(0xffffff, 1.1);
   const pointLight = new THREE.PointLight(0xffffff, 1.6);
   camera.add(pointLight);
@@ -37,7 +47,33 @@
   });
 
   (function animate() {
-    Globe.rotation.y += 0.0008; 
+    Globe.rotation.y += 0.0008;
+
+    const now = performance.now() / 1000;
+    let changed = false;
+    for (let i = recentMarkers.length - 1; i >= 0; i--) {
+      const m = recentMarkers[i];
+      const age = now - m.start;
+      if (age > MARKER_TTL) {
+        recentMarkers.splice(i, 1);
+        changed = true;
+        continue;
+      }
+      const fade = 1 - (age / MARKER_TTL);
+      const pulse = Math.abs(Math.sin(age * 3.0)) * 0.08 * fade + 0.02 * fade;
+      m.altitude = pulse;
+      changed = true;
+    }
+
+    if (changed) {
+      Globe.pointsData(recentMarkers.map(m => ({
+        lat: m.lat,
+        lng: m.lng,
+        color: m.color,
+        altitude: m.altitude
+      })));
+    }
+
     renderer.render(scene, camera);
     requestAnimationFrame(animate);
   })();
@@ -83,9 +119,13 @@
     addAlertItem(alert);
     const top = alert.top_srcs || {};
     const arcsToAdd = [];
+    let primaryGeo = null;
+
     for (const ip of Object.keys(top)) {
       const geo = await geolocateIP(ip);
       if (!geo) continue;
+      if (!primaryGeo) primaryGeo = geo;
+
       arcsToAdd.push({
         startLat: geo.lat,
         startLng: geo.lng,
@@ -94,6 +134,17 @@
         color: alert.predicted_label == 1 ? 'rgba(255,80,80,0.9)' : 'rgba(60,180,90,0.8)',
         weight: Math.min(12, Math.log((top[ip] || 1) + 1))
       });
+    }
+
+    if (primaryGeo) {
+      recentMarkers.push({
+        lat: primaryGeo.lat,
+        lng: primaryGeo.lng,
+        color: alert.predicted_label == 1 ? 'rgba(255,60,60,1)' : 'rgba(60,180,90,0.95)',
+        start: performance.now() / 1000,
+        altitude: 0.02
+      });
+      if (recentMarkers.length > 40) recentMarkers.shift();
     }
 
     if (arcsToAdd.length) {
@@ -133,5 +184,30 @@
     }
   }
   preload();
+
+  function createLegend() {
+    const legend = document.createElement('div');
+    legend.id = 'globe-legend';
+    legend.innerHTML = `
+      <strong>🌍 Live Attack Map</strong><br>
+      🔴 <span style="color:#ff5555;">Recent Attack</span><br>
+      🟢 <span style="color:#3cb371;">Normal Activity</span>
+    `;
+    Object.assign(legend.style, {
+      position: 'absolute',
+      bottom: '12px',
+      right: '16px',
+      background: 'rgba(0,0,0,0.6)',
+      color: '#fff',
+      padding: '8px 12px',
+      borderRadius: '8px',
+      fontSize: '13px',
+      lineHeight: '1.5',
+      fontFamily: 'monospace',
+      zIndex: 20
+    });
+    document.body.appendChild(legend);
+  }
+  createLegend();
 
 })();
