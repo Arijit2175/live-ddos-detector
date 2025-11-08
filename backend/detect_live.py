@@ -6,6 +6,8 @@ import os
 import threading
 from datetime import datetime, timedelta, timezone
 from math import log2
+from scapy.all import sniff, IP 
+from collections import deque
 
 MODEL_PATH = "models/ddos_model.joblib"
 LOG_PATH = "data/traffic_log.csv"
@@ -59,36 +61,34 @@ def compute_window_features(df_window):
     }
 
 def monitor_and_detect(model):
-    print("[*] Starting real-time detection...")
-    last_processed_time = None
+    print("[*] Starting real-time packet capture...")
+
+    pkt_buffer = deque(maxlen=10000)  
+
+    def packet_handler(pkt):
+        if IP in pkt:
+            pkt_buffer.append({
+                "timestamp": datetime.now(timezone.utc),
+                "src_ip": pkt[IP].src,
+                "dst_ip": pkt[IP].dst,
+                "length": len(pkt),
+                "protocol": pkt[IP].proto
+            })
+
+    threading.Thread(target=lambda: sniff(prn=packet_handler, store=False), daemon=True).start()
 
     while True:
-        if not os.path.exists(LOG_PATH):
+        if len(pkt_buffer) == 0:
             time.sleep(POLL_INTERVAL)
             continue
 
-        try:
-            df = pd.read_csv(LOG_PATH)
-        except Exception as e:
-            print("[!] Error reading CSV:", e)
+        df_window = pd.DataFrame(list(pkt_buffer))
+        if df_window.empty:
             time.sleep(POLL_INTERVAL)
             continue
 
-        if df.empty:
-            time.sleep(POLL_INTERVAL)
-            continue
-
-        df['timestamp'] = pd.to_datetime(df['timestamp'], errors='coerce', utc=True)
-
-        latest_time = df['timestamp'].max()
-        start_time = latest_time - timedelta(seconds=WINDOW_SECONDS)
-        df_window = df[df['timestamp'] >= start_time]
-
-        if last_processed_time is not None and latest_time <= last_processed_time:
-            time.sleep(POLL_INTERVAL)
-            continue
-
-        last_processed_time = latest_time
+        proto_map = {6: "TCP", 17: "UDP", 1: "ICMP"}
+        df_window["protocol"] = df_window["protocol"].map(proto_map).fillna("OTHER")
 
         feats = compute_window_features(df_window)
         if feats is None:
@@ -121,14 +121,14 @@ def monitor_and_detect(model):
             prob = None
 
         alert = {
-            "window_start": (start_time).isoformat(),
-            "window_end": (latest_time).isoformat(),
+            "window_start": datetime.now(timezone.utc).isoformat(),
+            "window_end": datetime.now(timezone.utc).isoformat(),
             "predicted_label": pred,
             "probability": round(prob, 4) if prob is not None else None,
             "pkts": feats["pkts"],
             "unique_srcs": feats["unique_srcs"],
             "entropy_src": feats["entropy_src"],
-            "top_srcs": feats["top_srcs"],  
+            "top_srcs": feats["top_srcs"],
             "detected_at": datetime.now(timezone.utc).isoformat()
         }
 
