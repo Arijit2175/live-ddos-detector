@@ -117,6 +117,7 @@
   }
 
   async function handleAlert(alert) {
+    if (alert.predicted_label !== 1) return;
     addAlertItem(alert);
     const top = alert.top_srcs || {};
     const arcsToAdd = [];

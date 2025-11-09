@@ -131,15 +131,15 @@ def monitor_and_detect(model):
             "top_srcs": feats["top_srcs"],
             "detected_at": datetime.now(timezone.utc).isoformat()
         }
-
-        os.makedirs(os.path.dirname(ALERTS_PATH) or ".", exist_ok=True)
-        with open(ALERTS_PATH, "a", encoding="utf-8") as f:
-            f.write(json.dumps(alert) + "\n")
-
-        if pred == 1:
+        
+        if pred == 1 or (prob is not None and prob > 0.8):
+            os.makedirs(os.path.dirname(ALERTS_PATH) or ".", exist_ok=True)
+            with open(ALERTS_PATH, "a", encoding="utf-8") as f:
+                f.write(json.dumps(alert) + "\n")
+                
             print(f"[ALERT] {alert['detected_at']} pkts={alert['pkts']} srcs={alert['unique_srcs']} prob={alert['probability']}")
         else:
-            print(f"[ok] {alert['detected_at']} pkts={alert['pkts']}")
+            print(f"[ok] {alert['detected_at']} pkts={alert['pkts']} prob={alert['probability']}")
 
         time.sleep(POLL_INTERVAL)
 
