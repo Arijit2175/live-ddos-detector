@@ -17,10 +17,11 @@
     .bumpImageUrl('https://unpkg.com/three-globe/example/img/earth-topology.png')
     .arcsData([])
     .arcColor('color')
-    .arcDashLength(0.45)
-    .arcDashGap(0.7)
-    .arcDashAnimateTime(1500)
-    .arcStroke(1.2);
+    .arcDashLength(0.3)
+    .arcDashGap(0.1)
+    .arcDashInitialGap(() => Math.random())
+    .arcDashAnimateTime(900)
+    .arcStroke(1.8);
 
   scene.add(Globe);
 
