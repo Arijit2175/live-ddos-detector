@@ -117,44 +117,55 @@
   }
 
   async function handleAlert(alert) {
-    if (alert.predicted_label !== 1) return;
-    addAlertItem(alert);
-    const top = alert.top_srcs || {};
-    const arcsToAdd = [];
-    let primaryGeo = null;
+  if (!alert) return;
 
-    for (const ip of Object.keys(top)) {
-      const geo = await geolocateIP(ip);
-      if (!geo) continue;
-      if (!primaryGeo) primaryGeo = geo;
+  if (alert.predicted_label === 1) addAlertItem(alert);
 
-      arcsToAdd.push({
-        startLat: geo.lat,
-        startLng: geo.lng,
-        endLat: 0,
-        endLng: 0,
-        color: alert.predicted_label == 1 ? 'rgba(255,80,80,0.9)' : 'rgba(60,180,90,0.8)',
-        weight: Math.min(12, Math.log((top[ip] || 1) + 1))
-      });
-    }
+  const top = alert.top_srcs || {};
+  const arcsToAdd = [];
+  let primaryGeo = null;
 
-    if (primaryGeo) {
-      recentMarkers.push({
-        lat: primaryGeo.lat,
-        lng: primaryGeo.lng,
-        color: alert.predicted_label == 1 ? 'rgba(255,60,60,1)' : 'rgba(60,180,90,0.95)',
-        start: performance.now() / 1000,
-        altitude: 0.02
-      });
-      if (recentMarkers.length > 40) recentMarkers.shift();
-    }
+  const arcColor =
+    alert.predicted_label === 1
+      ? 'rgba(255,60,60,0.9)' 
+      : 'rgba(60,180,90,0.9)'; 
 
-    if (arcsToAdd.length) {
-      const existing = Globe.arcsData() || [];
-      const newArcs = existing.concat(arcsToAdd);
-      Globe.arcsData(newArcs.slice(-300)); 
-    }
+  for (const ip of Object.keys(top)) {
+    const geo = await geolocateIP(ip);
+    if (!geo) continue;
+    if (!primaryGeo) primaryGeo = geo;
+
+    arcsToAdd.push({
+      startLat: geo.lat,
+      startLng: geo.lng,
+      endLat: 0,
+      endLng: 0,
+      color: arcColor,
+      weight: Math.min(12, Math.log((top[ip] || 1) + 1))
+    });
   }
+
+  if (!primaryGeo && Object.keys(top).length) {
+    primaryGeo = { lat: 0, lng: 0 };
+  }
+
+  if (primaryGeo) {
+    recentMarkers.push({
+      lat: primaryGeo.lat,
+      lng: primaryGeo.lng,
+      color: arcColor,
+      start: performance.now() / 1000,
+      altitude: 0.02
+    });
+    if (recentMarkers.length > 40) recentMarkers.shift();
+  }
+
+  if (arcsToAdd.length) {
+    const existing = Globe.arcsData() || [];
+    const newArcs = existing.concat(arcsToAdd);
+    Globe.arcsData(newArcs.slice(-300)); 
+  }
+}
 
   function connectSSE() {
     const sse = new EventSource('/stream');
@@ -174,6 +185,13 @@
     };
   }
   connectSSE();
+
+  setInterval(() => {
+  const arcs = Globe.arcsData();
+  if (arcs.length > 0) {
+    Globe.arcsData(arcs.slice(-300)); 
+  }
+}, 10000);
 
   async function preload() {
     try {
