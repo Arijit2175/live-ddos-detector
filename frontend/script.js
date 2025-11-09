@@ -152,6 +152,8 @@ async function geolocateIP(ip) {
     while (alertsList.childNodes.length > 50) alertsList.removeChild(alertsList.lastChild);
   }
 
+const shownLocations = new Set();
+
   async function handleAlert(alert) {
   if (!alert) return;
 
@@ -163,15 +165,22 @@ async function geolocateIP(ip) {
 
   const arcColor =
     alert.predicted_label === 1
-      ? 'rgba(255,60,60,0.9)' 
-      : 'rgba(60,180,90,0.9)'; 
+      ? 'rgba(255,60,60,0.9)'   
+      : 'rgba(60,180,90,0.9)';  
 
-    await new Promise(res => setTimeout(res, 200));
+  await new Promise(res => setTimeout(res, 200));
 
   for (const ip of Object.keys(top)) {
     const geo = await geolocateIP(ip);
     if (!geo) continue;
     if (!primaryGeo) primaryGeo = geo;
+
+    const locKey = `${geo.lat.toFixed(2)},${geo.lng.toFixed(2)}`;
+    if (shownLocations.has(locKey)) {
+      console.log(`[map] Skipping duplicate location: ${locKey}`);
+      continue; 
+    }
+    shownLocations.add(locKey);
 
     arcsToAdd.push({
       startLat: geo.lat,
@@ -201,7 +210,7 @@ async function geolocateIP(ip) {
   if (arcsToAdd.length) {
     const existing = Globe.arcsData() || [];
     const newArcs = existing.concat(arcsToAdd);
-    Globe.arcsData(newArcs.slice(-300)); 
+    Globe.arcsData(newArcs.slice(-300));
   }
 }
 
