@@ -1,4 +1,5 @@
 from flask import Flask, Response, send_from_directory, jsonify
+from flask_cors import CORS
 import time, json, os, sys
 
 sys.path.append(os.path.dirname(os.path.abspath(__file__)))
@@ -7,6 +8,7 @@ sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from backend.detect_live import start_background_detection  
 
 app = Flask(__name__, static_folder="../frontend", static_url_path="/")
+CORS(app)
 
 ALERTS_FILE = "data/alerts.jsonl"
 
