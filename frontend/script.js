@@ -83,24 +83,60 @@
   let ipGeoCache = {};
   try { ipGeoCache = JSON.parse(localStorage.getItem(geoCacheKey) || "{}"); } catch (e) { ipGeoCache = {}; }
 
-  async function geolocateIP(ip) {
-    if (!ip) return null;
-    if (ipGeoCache[ip]) return ipGeoCache[ip];
-    try {
-      const r = await fetch(`https://ipapi.co/${ip}/json/`);
-      if (!r.ok) throw new Error("geo fail");
-      const j = await r.json();
-      if (j && j.latitude && j.longitude) {
-        const obj = { lat: j.latitude, lng: j.longitude, city: j.city || "", country: j.country_name || "" };
-        ipGeoCache[ip] = obj;
-        localStorage.setItem(geoCacheKey, JSON.stringify(ipGeoCache));
-        return obj;
-      }
-    } catch (e) {
-      return null;
+  function isPrivateIP(ip) {
+  return (
+    ip.startsWith("10.") ||
+    ip.startsWith("192.168.") ||
+    ip.startsWith("172.16.") ||
+    ip.startsWith("172.17.") ||
+    ip.startsWith("172.18.") ||
+    ip.startsWith("172.19.") ||
+    ip.startsWith("172.20.") ||
+    ip.startsWith("172.21.") ||
+    ip.startsWith("172.22.") ||
+    ip.startsWith("172.23.") ||
+    ip.startsWith("172.24.") ||
+    ip.startsWith("172.25.") ||
+    ip.startsWith("172.26.") ||
+    ip.startsWith("172.27.") ||
+    ip.startsWith("172.28.") ||
+    ip.startsWith("172.29.") ||
+    ip.startsWith("172.30.") ||
+    ip.startsWith("172.31.") ||
+    ip === "127.0.0.1" ||
+    ip === "localhost"
+  );
+}
+
+async function geolocateIP(ip) {
+  if (!ip) return null;
+  if (ipGeoCache[ip]) return ipGeoCache[ip];
+
+  if (isPrivateIP(ip)) {
+    const localLoc = { lat: 20.5937, lng: 78.9629 }; 
+    ipGeoCache[ip] = localLoc;
+    localStorage.setItem(geoCacheKey, JSON.stringify(ipGeoCache));
+    return localLoc;
+  }
+
+  try {
+    const r = await fetch(`https://ipapi.co/${ip}/json/`);
+    if (!r.ok) throw new Error("geo fail");
+    const j = await r.json();
+
+    if (j && j.latitude && j.longitude) {
+      const obj = { lat: j.latitude, lng: j.longitude, city: j.city || "", country: j.country_name || "" };
+      ipGeoCache[ip] = obj;
+      localStorage.setItem(geoCacheKey, JSON.stringify(ipGeoCache));
+      return obj;
     }
+  } catch (e) {
+    console.warn("Geolocation failed for", ip, e.message);
     return null;
   }
+
+  return null;
+}
 
   let totalAlerts = 0;
   const alertsList = document.getElementById('alerts-list');
@@ -129,6 +165,8 @@
     alert.predicted_label === 1
       ? 'rgba(255,60,60,0.9)' 
       : 'rgba(60,180,90,0.9)'; 
+
+    await new Promise(res => setTimeout(res, 200));
 
   for (const ip of Object.keys(top)) {
     const geo = await geolocateIP(ip);
