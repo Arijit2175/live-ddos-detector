@@ -4,8 +4,12 @@
   container.style.height = '100%';
 
   const scene = new THREE.Scene();
-
-  const camera = new THREE.PerspectiveCamera(55, container.clientWidth / container.clientHeight, 1, 2000);
+  const camera = new THREE.PerspectiveCamera(
+    55,
+    container.clientWidth / container.clientHeight,
+    1,
+    2000
+  );
   camera.position.z = 420;
 
   const renderer = new THREE.WebGLRenderer({ antialias: true });
@@ -60,51 +64,42 @@
         changed = true;
         continue;
       }
-      const fade = 1 - (age / MARKER_TTL);
+      const fade = 1 - age / MARKER_TTL;
       const pulse = Math.abs(Math.sin(age * 3.0)) * 0.08 * fade + 0.02 * fade;
       m.altitude = pulse;
       changed = true;
     }
 
     if (changed) {
-      Globe.pointsData(recentMarkers.map(m => ({
-        lat: m.lat,
-        lng: m.lng,
-        color: m.color,
-        altitude: m.altitude
-      })));
+      Globe.pointsData(
+        recentMarkers.map(m => ({
+          lat: m.lat,
+          lng: m.lng,
+          color: m.color,
+          altitude: m.altitude
+        }))
+      );
     }
 
     renderer.render(scene, camera);
     requestAnimationFrame(animate);
   })();
 
-  const geoCacheKey = "ip_geo_cache_v1";
+  const geoCacheKey = 'ip_geo_cache_v1';
   let ipGeoCache = {};
-  try { ipGeoCache = JSON.parse(localStorage.getItem(geoCacheKey) || "{}"); } catch (e) { ipGeoCache = {}; }
+  try {
+    ipGeoCache = JSON.parse(localStorage.getItem(geoCacheKey) || '{}');
+  } catch {
+    ipGeoCache = {};
+  }
 
   function isPrivateIP(ip) {
     return (
-      ip.startsWith("10.") ||
-      ip.startsWith("192.168.") ||
-      ip.startsWith("172.16.") ||
-      ip.startsWith("172.17.") ||
-      ip.startsWith("172.18.") ||
-      ip.startsWith("172.19.") ||
-      ip.startsWith("172.20.") ||
-      ip.startsWith("172.21.") ||
-      ip.startsWith("172.22.") ||
-      ip.startsWith("172.23.") ||
-      ip.startsWith("172.24.") ||
-      ip.startsWith("172.25.") ||
-      ip.startsWith("172.26.") ||
-      ip.startsWith("172.27.") ||
-      ip.startsWith("172.28.") ||
-      ip.startsWith("172.29.") ||
-      ip.startsWith("172.30.") ||
-      ip.startsWith("172.31.") ||
-      ip === "127.0.0.1" ||
-      ip === "localhost"
+      ip.startsWith('10.') ||
+      ip.startsWith('192.168.') ||
+      ip.startsWith('172.') ||
+      ip === '127.0.0.1' ||
+      ip === 'localhost'
     );
   }
 
@@ -121,17 +116,20 @@
 
     try {
       const r = await fetch(`https://ipapi.co/${ip}/json/`);
-      if (!r.ok) throw new Error("geo fail");
+      if (!r.ok) throw new Error('geo fail');
       const j = await r.json();
-
       if (j && j.latitude && j.longitude) {
-        const obj = { lat: j.latitude, lng: j.longitude, city: j.city || "", country: j.country_name || "" };
+        const obj = {
+          lat: j.latitude,
+          lng: j.longitude,
+          city: j.city || '',
+          country: j.country_name || ''
+        };
         ipGeoCache[ip] = obj;
         localStorage.setItem(geoCacheKey, JSON.stringify(ipGeoCache));
         return obj;
       }
-    } catch (e) {
-      console.warn("Geolocation failed for", ip, e.message);
+    } catch {
       return null;
     }
 
@@ -143,21 +141,22 @@
   const totalEl = document.getElementById('total');
   const info = document.getElementById('info');
 
+  const shownAttackLocations = new Set();
+  const shownNormalLocations = new Set();
+  let allArcs = [];
+
+  let showAttack = true;
+  let showNormal = true;
+
   function addAlertItem(alert) {
     totalAlerts++;
     totalEl.textContent = totalAlerts;
     const li = document.createElement('li');
     li.textContent = `${alert.detected_at} | pkts=${alert.pkts} prob=${alert.probability}`;
     alertsList.insertBefore(li, alertsList.firstChild);
-    while (alertsList.childNodes.length > 50) alertsList.removeChild(alertsList.lastChild);
+    while (alertsList.childNodes.length > 50)
+      alertsList.removeChild(alertsList.lastChild);
   }
-
-  const shownAttackLocations = new Set(); 
-  const shownNormalLocations = new Set(); 
-  let allArcs = []; 
-
-  let showAttack = true;
-  let showNormal = true;
 
   function renderArcsFromAll() {
     const filtered = allArcs.filter(a => {
@@ -179,7 +178,6 @@
 
   async function handleAlert(alert) {
     if (!alert) return;
-
     if (alert.predicted_label === 1) addAlertItem(alert);
 
     const top = alert.top_srcs || {};
@@ -190,44 +188,28 @@
       alert.predicted_label === 1
         ? 'rgba(255,60,60,0.9)'
         : 'rgba(60,180,90,0.9)';
-
     const labelName = alert.predicted_label === 1 ? 'attack' : 'normal';
-
-    await new Promise(res => setTimeout(res, 200));
 
     for (const ip of Object.keys(top)) {
       const geo = await geolocateIP(ip);
       if (!geo) continue;
       if (!primaryGeo) primaryGeo = geo;
 
-      const locKey = `${geo.lat.toFixed(2)},${geo.lng.toFixed(2)}`;
+      const locKey = `${geo.lat.toFixed(2)},${geo.lng.toFixed(2)},${labelName}`;
+      const setRef =
+        labelName === 'attack' ? shownAttackLocations : shownNormalLocations;
+      if (setRef.has(locKey)) continue;
+      setRef.add(locKey);
 
-      if (labelName === 'attack' && shownAttackLocations.has(locKey)) {
-        continue;
-      }
-      if (labelName === 'normal' && shownNormalLocations.has(locKey)) {
-        continue;
-      }
-
-      if (labelName === 'attack') shownAttackLocations.add(locKey);
-      if (labelName === 'normal') shownNormalLocations.add(locKey);
-
-      const arc = {
+      arcsToAdd.push({
         startLat: geo.lat,
         startLng: geo.lng,
-        endLat: 0,
-        endLng: 0,
+        endLat: 20.5937, 
+        endLng: 78.9629,
         color: arcColor,
         weight: Math.min(12, Math.log((top[ip] || 1) + 1)),
         _label: labelName
-      };
-
-      arcsToAdd.push(arc);
-      allArcs.push(arc);
-    }
-
-    if (!primaryGeo && Object.keys(top).length) {
-      primaryGeo = { lat: 0, lng: 0 };
+      });
     }
 
     if (primaryGeo) {
@@ -241,15 +223,27 @@
       if (recentMarkers.length > 40) recentMarkers.shift();
     }
 
+    allArcs.push(...arcsToAdd);
+    const uniqueArcs = [];
+    const seenKeys = new Set();
+    for (const arc of allArcs) {
+      const key = `${arc.startLat.toFixed(2)},${arc.startLng.toFixed(2)},${arc._label}`;
+      if (!seenKeys.has(key)) {
+        seenKeys.add(key);
+        uniqueArcs.push(arc);
+      }
+    }
+    allArcs = uniqueArcs;
+
     renderArcsFromAll();
     updateLegendCounters();
   }
 
   function connectSSE() {
     const sse = new EventSource('/stream');
-    sse.onopen = () => { info.textContent = "✅ Connected to live alerts."; };
+    sse.onopen = () => (info.textContent = '✅ Connected to live alerts.');
     sse.onerror = () => {
-      info.textContent = "⚠️ Reconnecting...";
+      info.textContent = '⚠️ Reconnecting...';
       sse.close();
       setTimeout(connectSSE, 2000);
     };
@@ -258,18 +252,11 @@
         const data = JSON.parse(e.data);
         handleAlert(data);
       } catch (err) {
-        console.warn("bad alert", err);
+        console.warn('bad alert', err);
       }
     };
   }
   connectSSE();
-
-  setInterval(() => {
-    const arcs = Globe.arcsData();
-    if (arcs.length > 0) {
-      Globe.arcsData(arcs.slice(-300));
-    }
-  }, 10000);
 
   async function preload() {
     try {
@@ -281,7 +268,7 @@
       }
       totalEl.textContent = totalAlerts;
     } catch (e) {
-      console.warn("preload failed", e);
+      console.warn('preload failed', e);
     }
   }
   preload();
@@ -298,7 +285,7 @@
         <span id="legend-normal-count" style="min-width:22px; text-align:center;">0</span>
       </div>
       <div style="font-size:12px; margin-top:6px; opacity:0.9;">
-        Click a button to show/hide that category. Counters show unique locations currently tracked.
+        Click a button to show/hide category. Counters show unique locations tracked.
       </div>
     `;
     Object.assign(legend.style, {
@@ -312,11 +299,7 @@
       fontSize: '13px',
       lineHeight: '1.5',
       fontFamily: 'monospace',
-      zIndex: 20,
-      display: 'flex',
-      flexDirection: 'column',
-      gap: '6px',
-      alignItems: 'flex-start'
+      zIndex: 20
     });
     document.body.appendChild(legend);
 
@@ -331,29 +314,22 @@
         cursor: pointer;
         font-weight:600;
       }
-      .legend-btn.off {
-        opacity: 0.4;
-      }
+      .legend-btn.off { opacity: 0.4; }
     `;
     document.head.appendChild(style);
 
     const attackBtn = document.getElementById('legend-attack-btn');
     const normalBtn = document.getElementById('legend-normal-btn');
-
-    function toggleAttack() {
+    attackBtn.addEventListener('click', () => {
       showAttack = !showAttack;
       attackBtn.classList.toggle('off', !showAttack);
       renderArcsFromAll();
-    }
-    function toggleNormal() {
+    });
+    normalBtn.addEventListener('click', () => {
       showNormal = !showNormal;
       normalBtn.classList.toggle('off', !showNormal);
       renderArcsFromAll();
-    }
-
-    attackBtn.addEventListener('click', toggleAttack);
-    normalBtn.addEventListener('click', toggleNormal);
+    });
   }
   createLegend();
-
 })();
