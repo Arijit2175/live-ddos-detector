@@ -71,7 +71,7 @@ main { display: flex; height: calc(100vh - 60px); }
   border-radius: 10px;
   font-size: 13px;
   line-height: 1.4;
-  width: 200px;
+  width: 240px;
   box-shadow: 0 0 12px rgba(0, 0, 0, 0.5);
   z-index: 2000;
 }
