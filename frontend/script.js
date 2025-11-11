@@ -137,26 +137,15 @@
   }
 
   let totalAlerts = 0;
-  const alertsList = document.getElementById('alerts-list');
-  const totalEl = document.getElementById('total');
+  const totalEl = document.getElementById('alert-counter');
   const info = document.getElementById('info');
+  const latestInfo = document.getElementById('latest-info');
 
   const shownAttackLocations = new Set();
   const shownNormalLocations = new Set();
   let allArcs = [];
-
   let showAttack = true;
   let showNormal = true;
-
-  function addAlertItem(alert) {
-    totalAlerts++;
-    totalEl.textContent = totalAlerts;
-    const li = document.createElement('li');
-    li.textContent = `${alert.detected_at} | pkts=${alert.pkts} prob=${alert.probability}`;
-    alertsList.insertBefore(li, alertsList.firstChild);
-    while (alertsList.childNodes.length > 50)
-      alertsList.removeChild(alertsList.lastChild);
-  }
 
   function renderArcsFromAll() {
     const filtered = allArcs.filter(a => {
@@ -178,7 +167,9 @@
 
   async function handleAlert(alert) {
     if (!alert) return;
-    if (alert.predicted_label === 1) addAlertItem(alert);
+
+    totalAlerts++;
+    totalEl.textContent = `Active Alerts: ${totalAlerts}`;
 
     const top = alert.top_srcs || {};
     const arcsToAdd = [];
@@ -204,7 +195,7 @@
       arcsToAdd.push({
         startLat: geo.lat,
         startLng: geo.lng,
-        endLat: 20.5937, 
+        endLat: 20.5937,
         endLng: 78.9629,
         color: arcColor,
         weight: Math.min(12, Math.log((top[ip] || 1) + 1)),
@@ -221,19 +212,17 @@
         altitude: 0.02
       });
       if (recentMarkers.length > 40) recentMarkers.shift();
+
+      latestInfo.innerHTML = `
+        <b>Last Source:</b> ${primaryGeo.city || 'Unknown'}, ${primaryGeo.country || 'Unknown'}<br>
+        <b>Type:</b> ${labelName}<br>
+        <b>Time:</b> ${new Date(alert.detected_at || Date.now()).toLocaleTimeString()}
+      `;
     }
 
-    allArcs.push(...arcsToAdd);
-    const uniqueArcs = [];
-    const seenKeys = new Set();
-    for (const arc of allArcs) {
-      const key = `${arc.startLat.toFixed(2)},${arc.startLng.toFixed(2)},${arc._label}`;
-      if (!seenKeys.has(key)) {
-        seenKeys.add(key);
-        uniqueArcs.push(arc);
-      }
-    }
-    allArcs = uniqueArcs;
+    allArcs = [...new Map(allArcs.concat(arcsToAdd).map(a =>
+      [`${a.startLat.toFixed(2)},${a.startLng.toFixed(2)},${a._label}`, a]
+    )).values()];
 
     renderArcsFromAll();
     updateLegendCounters();
@@ -258,65 +247,22 @@
   }
   connectSSE();
 
-  async function preload() {
-    try {
-      const r = await fetch('/api/alerts');
-      const arr = await r.json();
-      for (const a of arr.slice(-50)) {
-        await handleAlert(a);
-        addAlertItem(a);
-      }
-      totalEl.textContent = totalAlerts;
-    } catch (e) {
-      console.warn('preload failed', e);
-    }
-  }
-  preload();
-
   function createLegend() {
     const legend = document.createElement('div');
     legend.id = 'globe-legend';
     legend.innerHTML = `
       <div style="font-weight:600; margin-bottom:6px;">🌍 Live Attack Map</div>
       <div style="display:flex; gap:8px; align-items:center;">
-        <button id="legend-attack-btn" class="legend-btn" title="Toggle attack arcs">🔴 Attack</button>
-        <span id="legend-attack-count" style="min-width:22px; text-align:center;">0</span>
-        <button id="legend-normal-btn" class="legend-btn" title="Toggle normal arcs">🟢 Normal</button>
-        <span id="legend-normal-count" style="min-width:22px; text-align:center;">0</span>
+        <button id="legend-attack-btn" class="legend-btn">🔴 Attack</button>
+        <span id="legend-attack-count" style="min-width:22px;">0</span>
+        <button id="legend-normal-btn" class="legend-btn">🟢 Normal</button>
+        <span id="legend-normal-count" style="min-width:22px;">0</span>
       </div>
       <div style="font-size:12px; margin-top:6px; opacity:0.9;">
-        Click a button to show/hide category. Counters show unique locations tracked.
+        Toggle visibility by type. Counts show unique active sources.
       </div>
     `;
-    Object.assign(legend.style, {
-      position: 'absolute',
-      bottom: '12px',
-      right: '16px',
-      background: 'rgba(0,0,0,0.6)',
-      color: '#fff',
-      padding: '10px 12px',
-      borderRadius: '8px',
-      fontSize: '13px',
-      lineHeight: '1.5',
-      fontFamily: 'monospace',
-      zIndex: 20
-    });
     document.body.appendChild(legend);
-
-    const style = document.createElement('style');
-    style.innerHTML = `
-      .legend-btn {
-        background: rgba(255,255,255,0.06);
-        color: #fff;
-        border: 0;
-        padding: 6px 8px;
-        border-radius: 6px;
-        cursor: pointer;
-        font-weight:600;
-      }
-      .legend-btn.off { opacity: 0.4; }
-    `;
-    document.head.appendChild(style);
 
     const attackBtn = document.getElementById('legend-attack-btn');
     const normalBtn = document.getElementById('legend-normal-btn');
