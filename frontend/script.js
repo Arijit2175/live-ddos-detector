@@ -28,17 +28,6 @@
     .arcStroke(1.8);
 
   scene.add(Globe);
-
-  Globe.pointsData([])
-       .pointLat(d => d.lat)
-       .pointLng(d => d.lng)
-       .pointColor(d => d.color || 'orange')
-       .pointAltitude(d => d.altitude || 0.02)
-       .pointRadius(0.6);
-
-  const recentMarkers = [];
-  const MARKER_TTL = 6.0;
-
   const ambientLight = new THREE.AmbientLight(0xffffff, 1.1);
   const pointLight = new THREE.PointLight(0xffffff, 1.6);
   camera.add(pointLight);
@@ -53,142 +42,116 @@
 
   (function animate() {
     Globe.rotation.y += 0.0008;
-
-    const now = performance.now() / 1000;
-    let changed = false;
-    for (let i = recentMarkers.length - 1; i >= 0; i--) {
-      const m = recentMarkers[i];
-      const age = now - m.start;
-      if (age > MARKER_TTL) {
-        recentMarkers.splice(i, 1);
-        changed = true;
-        continue;
-      }
-      const fade = 1 - age / MARKER_TTL;
-      const pulse = Math.abs(Math.sin(age * 3.0)) * 0.08 * fade + 0.02 * fade;
-      m.altitude = pulse;
-      changed = true;
-    }
-
-    if (changed) {
-      Globe.pointsData(
-        recentMarkers.map(m => ({
-          lat: m.lat,
-          lng: m.lng,
-          color: m.color,
-          altitude: m.altitude
-        }))
-      );
-    }
-
     renderer.render(scene, camera);
     requestAnimationFrame(animate);
   })();
 
   const geoCacheKey = 'ip_geo_cache_v1';
   let ipGeoCache = {};
-  try {
-    ipGeoCache = JSON.parse(localStorage.getItem(geoCacheKey) || '{}');
-  } catch {
-    ipGeoCache = {};
-  }
+  try { ipGeoCache = JSON.parse(localStorage.getItem(geoCacheKey) || '{}'); } catch {}
 
   function isPrivateIP(ip) {
     return (
-      ip.startsWith('10.') ||
-      ip.startsWith('192.168.') ||
-      ip.startsWith('172.') ||
-      ip === '127.0.0.1' ||
-      ip === 'localhost'
+      ip.startsWith('10.') || ip.startsWith('192.168.') ||
+      ip.startsWith('172.') || ip === '127.0.0.1' || ip === 'localhost'
     );
   }
 
   async function geolocateIP(ip) {
     if (!ip) return null;
     if (ipGeoCache[ip]) return ipGeoCache[ip];
-
     if (isPrivateIP(ip)) {
-      const localLoc = { lat: 20.5937, lng: 78.9629 };
-      ipGeoCache[ip] = localLoc;
-      localStorage.setItem(geoCacheKey, JSON.stringify(ipGeoCache));
-      return localLoc;
+      const loc = { lat: 20.5937, lng: 78.9629 };
+      ipGeoCache[ip] = loc;
+      return loc;
     }
-
     try {
-      const r = await fetch(`https://ipapi.co/${ip}/json/`);
-      if (!r.ok) throw new Error('geo fail');
-      const j = await r.json();
-      if (j && j.latitude && j.longitude) {
-        const obj = {
-          lat: j.latitude,
-          lng: j.longitude,
-          city: j.city || '',
-          country: j.country_name || ''
-        };
+      const res = await fetch(`https://ipapi.co/${ip}/json/`);
+      if (!res.ok) throw new Error('geo fail');
+      const j = await res.json();
+      if (j.latitude && j.longitude) {
+        const obj = { lat: j.latitude, lng: j.longitude, city: j.city, country: j.country_name };
         ipGeoCache[ip] = obj;
-        localStorage.setItem(geoCacheKey, JSON.stringify(ipGeoCache));
         return obj;
       }
     } catch {
       return null;
     }
-
     return null;
   }
 
-  let totalAlerts = 0;
   const totalEl = document.getElementById('alert-counter');
-  const info = document.getElementById('info');
   const latestInfo = document.getElementById('latest-info');
+  const info = document.getElementById('info');
+  let totalAlerts = 0;
 
+  let allArcs = [];
   const shownAttackLocations = new Set();
   const shownNormalLocations = new Set();
-  let allArcs = [];
   let showAttack = true;
   let showNormal = true;
 
-  function renderArcsFromAll() {
-    const filtered = allArcs.filter(a => {
-      if (a._label === 'attack') return showAttack;
-      if (a._label === 'normal') return showNormal;
-      return true;
-    });
-    Globe.arcsData(filtered.slice(-300));
+  const chart = document.getElementById('alert-chart');
+  const ctx = chart.getContext('2d');
+  const chartData = Array(30).fill(0);
+  let chartTimer = null;
+
+  function drawChart() {
+    const w = chart.width;
+    const h = chart.height;
+    ctx.clearRect(0, 0, w, h);
+    ctx.beginPath();
+    ctx.moveTo(0, h - chartData[0]);
+    for (let i = 1; i < chartData.length; i++) {
+      ctx.lineTo((i / (chartData.length - 1)) * w, h - chartData[i]);
+    }
+    ctx.strokeStyle = '#ff3d00';
+    ctx.lineWidth = 2;
+    ctx.stroke();
+    ctx.fillStyle = 'rgba(255,61,0,0.2)';
+    ctx.lineTo(w, h);
+    ctx.lineTo(0, h);
+    ctx.closePath();
+    ctx.fill();
   }
 
-  function updateLegendCounters() {
-    const attackCount = shownAttackLocations.size;
-    const normalCount = shownNormalLocations.size;
-    const attackCounter = document.getElementById('legend-attack-count');
-    const normalCounter = document.getElementById('legend-normal-count');
-    if (attackCounter) attackCounter.textContent = attackCount;
-    if (normalCounter) normalCounter.textContent = normalCount;
+  function pushAlertToChart() {
+    chartData.push(Math.min(100, totalAlerts * 2)); 
+    if (chartData.length > 30) chartData.shift();
+    drawChart();
+  }
+
+  chartTimer = setInterval(() => {
+    chartData.push(chartData[chartData.length - 1] * 0.8);
+    if (chartData.length > 30) chartData.shift();
+    drawChart();
+  }, 3000);
+
+  function renderArcsFromAll() {
+    const filtered = allArcs.filter(a =>
+      (a._label === 'attack' && showAttack) || (a._label === 'normal' && showNormal)
+    );
+    Globe.arcsData(filtered.slice(-300));
   }
 
   async function handleAlert(alert) {
     if (!alert) return;
-
     totalAlerts++;
     totalEl.textContent = `Active Alerts: ${totalAlerts}`;
+    pushAlertToChart();
 
     const top = alert.top_srcs || {};
     const arcsToAdd = [];
-    let primaryGeo = null;
-
-    const arcColor =
-      alert.predicted_label === 1
-        ? 'rgba(255,60,60,0.9)'
-        : 'rgba(60,180,90,0.9)';
     const labelName = alert.predicted_label === 1 ? 'attack' : 'normal';
+    const arcColor = labelName === 'attack' ? 'rgba(255,60,60,0.9)' : 'rgba(60,180,90,0.9)';
+    let primaryGeo = null;
 
     for (const ip of Object.keys(top)) {
       const geo = await geolocateIP(ip);
       if (!geo) continue;
       if (!primaryGeo) primaryGeo = geo;
-
       const locKey = `${geo.lat.toFixed(2)},${geo.lng.toFixed(2)},${labelName}`;
-      const setRef =
-        labelName === 'attack' ? shownAttackLocations : shownNormalLocations;
+      const setRef = labelName === 'attack' ? shownAttackLocations : shownNormalLocations;
       if (setRef.has(locKey)) continue;
       setRef.add(locKey);
 
@@ -198,21 +161,11 @@
         endLat: 20.5937,
         endLng: 78.9629,
         color: arcColor,
-        weight: Math.min(12, Math.log((top[ip] || 1) + 1)),
         _label: labelName
       });
     }
 
     if (primaryGeo) {
-      recentMarkers.push({
-        lat: primaryGeo.lat,
-        lng: primaryGeo.lng,
-        color: arcColor,
-        start: performance.now() / 1000,
-        altitude: 0.02
-      });
-      if (recentMarkers.length > 40) recentMarkers.shift();
-
       latestInfo.innerHTML = `
         <b>Last Source:</b> ${primaryGeo.city || 'Unknown'}, ${primaryGeo.country || 'Unknown'}<br>
         <b>Type:</b> ${labelName}<br>
@@ -225,7 +178,6 @@
     )).values()];
 
     renderArcsFromAll();
-    updateLegendCounters();
   }
 
   function connectSSE() {
@@ -237,12 +189,7 @@
       setTimeout(connectSSE, 2000);
     };
     sse.onmessage = e => {
-      try {
-        const data = JSON.parse(e.data);
-        handleAlert(data);
-      } catch (err) {
-        console.warn('bad alert', err);
-      }
+      try { handleAlert(JSON.parse(e.data)); } catch {}
     };
   }
   connectSSE();
@@ -254,16 +201,13 @@
       <div style="font-weight:600; margin-bottom:6px;">🌍 Live Attack Map</div>
       <div style="display:flex; gap:8px; align-items:center;">
         <button id="legend-attack-btn" class="legend-btn">🔴 Attack</button>
-        <span id="legend-attack-count" style="min-width:22px;">0</span>
         <button id="legend-normal-btn" class="legend-btn">🟢 Normal</button>
-        <span id="legend-normal-count" style="min-width:22px;">0</span>
       </div>
       <div style="font-size:12px; margin-top:6px; opacity:0.9;">
-        Toggle visibility by type. Counts show unique active sources.
+        Toggle visibility by type.
       </div>
     `;
     document.body.appendChild(legend);
-
     const attackBtn = document.getElementById('legend-attack-btn');
     const normalBtn = document.getElementById('legend-normal-btn');
     attackBtn.addEventListener('click', () => {

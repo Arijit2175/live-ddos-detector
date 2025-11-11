@@ -13,17 +13,9 @@ header {
   background: rgba(0,0,0,0.25);
   border-bottom: 1px solid rgba(255,255,255,0.05);
 }
-h1 {
-  margin: 0;
-  font-size: 1.1rem;
-}
-main {
-  display: flex;
-  height: calc(100vh - 60px);
-}
-#globe-container {
-  flex: 1;
-}
+h1 { margin: 0; font-size: 1.1rem; }
+main { display: flex; height: calc(100vh - 60px); }
+#globe-container { flex: 1; }
 
 #panel {
   width: 320px;
@@ -37,6 +29,11 @@ main {
   color: #ff3d00;
   font-weight: bold;
   margin-top: 6px;
+}
+#alert-chart {
+  margin-top: 10px;
+  border-radius: 8px;
+  background: rgba(255,255,255,0.05);
 }
 #latest-info {
   margin-top: 10px;
