@@ -16,36 +16,72 @@
   renderer.setSize(container.clientWidth, container.clientHeight);
   container.appendChild(renderer.domElement);
 
-  const Globe = new ThreeGlobe({ animateIn: true })
-    .globeImageUrl('https://unpkg.com/three-globe/example/img/earth-blue-marble.jpg')
-    .bumpImageUrl('https://unpkg.com/three-globe/example/img/earth-topology.png')
-    .arcsData([])
-    .arcColor('color')
-    .arcDashLength(0.3)
-    .arcDashGap(0.1)
-    .arcDashInitialGap(() => Math.random())
-    .arcDashAnimateTime(900)
-    .arcStroke(1.8);
+const Globe = new ThreeGlobe({ animateIn: true })
+  .globeImageUrl('//unpkg.com/three-globe/example/img/earth-dark.jpg')
+  .bumpImageUrl('//unpkg.com/three-globe/example/img/earth-topology.png')
+  .arcsData([])
+  .arcColor('color')
+  .arcDashLength(0.3)
+  .arcDashGap(0.1)
+  .arcDashInitialGap(() => Math.random())
+  .arcDashAnimateTime(900)
+  .arcStroke(1.6);
 
-  scene.add(Globe);
+Globe.material = new THREE.MeshPhongMaterial({
+  color: 0x0a0a1a,        
+  emissive: 0x111133,     
+  shininess: 18,
+  bumpScale: 0.5,
+  specular: new THREE.Color(0x222244),
+});
 
-  const ambientLight = new THREE.AmbientLight(0xffffff, 0.5);
-scene.add(ambientLight);
-
-const directionalLight = new THREE.DirectionalLight(0xffffff, 1.2);
-directionalLight.position.set(100, 200, 300);
-scene.add(directionalLight);
+const nightTexture = new THREE.TextureLoader().load('//unpkg.com/three-globe/example/img/earth-night.jpg');
+const nightMaterial = new THREE.MeshBasicMaterial({
+  map: nightTexture,
+  blending: THREE.AdditiveBlending,
+  transparent: true,
+  opacity: 0.35,
+});
+const nightGlobe = new THREE.Mesh(new THREE.SphereGeometry(200, 64, 64), nightMaterial);
+scene.add(nightGlobe);
+nightGlobe.scale.set(1.001, 1.001, 1.001);
 
 const atmosphereGeometry = new THREE.SphereGeometry(200, 64, 64);
-const atmosphereMaterial = new THREE.MeshPhongMaterial({
-  color: 0x3399ff,
-  transparent: true,
-  opacity: 0.08,
+const atmosphereMaterial = new THREE.ShaderMaterial({
+  vertexShader: `
+    varying vec3 vNormal;
+    void main() {
+      vNormal = normalize(normalMatrix * normal);
+      gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+    }
+  `,
+  fragmentShader: `
+    varying vec3 vNormal;
+    void main() {
+      float intensity = pow(0.7 - dot(vNormal, vec3(0, 0, 1.0)), 4.0);
+      gl_FragColor = vec4(0.2, 0.6, 1.0, 1.0) * intensity;
+    }
+  `,
+  blending: THREE.AdditiveBlending,
   side: THREE.BackSide,
+  transparent: true,
 });
 const atmosphere = new THREE.Mesh(atmosphereGeometry, atmosphereMaterial);
-atmosphere.scale.set(1.15, 1.15, 1.15);
+atmosphere.scale.set(1.18, 1.18, 1.18);
 scene.add(atmosphere);
+
+scene.add(Globe);
+
+const ambientLight = new THREE.AmbientLight(0xffffff, 0.5);
+scene.add(ambientLight);
+
+const directionalLight = new THREE.DirectionalLight(0xffffff, 1.4);
+directionalLight.position.set(100, 200, 300);
+directionalLight.castShadow = true;
+scene.add(directionalLight);
+
+renderer.shadowMap.enabled = true;
+renderer.shadowMap.type = THREE.PCFSoftShadowMap;
 
 camera.position.set(0, 120, 420);
 camera.lookAt(0, 0, 0);
