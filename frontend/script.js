@@ -240,4 +240,32 @@
   }
 
   createLegend();
+
+  const tips = [
+  "🧩 Keep your OS and software up to date.",
+  "🔐 Use strong, unique passwords for each account.",
+  "🌐 Avoid clicking unknown or suspicious links.",
+  "🧱 Enable a firewall to block unwanted traffic.",
+  "📊 Monitor network activity for unusual spikes.",
+  "💾 Backup important data regularly.",
+  "🚫 Disable unused network ports and services.",
+  "🕵️ Use intrusion detection tools for deeper insights.",
+  "📡 Limit SSH and RDP access to trusted IPs only.",
+  "⚙️ Configure rate limiting to mitigate DDoS effects."
+];
+
+const tipEl = document.getElementById("tip-text");
+let tipIndex = 0;
+
+function cycleTips() {
+  tipEl.style.opacity = 0;
+  setTimeout(() => {
+    tipEl.textContent = tips[tipIndex];
+    tipEl.style.opacity = 1;
+    tipIndex = (tipIndex + 1) % tips.length;
+  }, 400);
+}
+
+setInterval(cycleTips, 3000); 
+cycleTips();
 })();

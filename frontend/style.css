@@ -93,3 +93,39 @@ main { display: flex; height: calc(100vh - 60px); }
   font-size: 0.9rem;
   color: #9fb7d9;
 }
+
+#security-tips {
+  margin-top: 18px;
+  padding: 14px;
+  background: rgba(255,255,255,0.05);
+  border-radius: 10px;
+  font-size: 0.9rem;
+  color: #cfe3ff;
+  line-height: 1.5;
+  text-align: center;
+  min-height: 60px;
+  transition: opacity 0.6s ease-in-out, transform 0.6s ease-in-out;
+}
+
+#security-tips.fade-out {
+  opacity: 0;
+  transform: translateY(8px);
+}
+
+#globe-container canvas {
+  transition: transform 0.4s ease-in-out, opacity 0.4s ease-in-out;
+}
+
+#globe-container canvas:hover {
+  transform: scale(1.01);
+  opacity: 0.95;
+}
+
+#alert-counter-box, #globe-legend, #panel {
+  transition: all 0.5s ease-in-out;
+}
+
+#alert-counter-box:hover {
+  transform: scale(1.05);
+  box-shadow: 0 0 12px rgba(0,255,106,0.3);
+}
