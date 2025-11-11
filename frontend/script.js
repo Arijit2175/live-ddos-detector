@@ -84,6 +84,7 @@
   const latestInfo = document.getElementById('latest-info');
   const info = document.getElementById('info');
   let totalAlerts = 0;
+  const countryCounts = {};
 
   let allArcs = [];
   const shownAttackLocations = new Set();
@@ -149,6 +150,10 @@
     for (const ip of Object.keys(top)) {
       const geo = await geolocateIP(ip);
       if (!geo) continue;
+      if (geo.country) {
+        countryCounts[geo.country] = (countryCounts[geo.country] || 0) + 1;
+        updateCountryList();
+      }
       if (!primaryGeo) primaryGeo = geo;
       const locKey = `${geo.lat.toFixed(2)},${geo.lng.toFixed(2)},${labelName}`;
       const setRef = labelName === 'attack' ? shownAttackLocations : shownNormalLocations;
@@ -179,6 +184,16 @@
 
     renderArcsFromAll();
   }
+
+  function updateCountryList() {
+  const list = document.getElementById('country-list');
+  const sorted = Object.entries(countryCounts)
+    .sort((a, b) => b[1] - a[1])
+    .slice(0, 5);
+  list.innerHTML = sorted
+    .map(([country, count]) => `<li><span>${country}</span><span>${count}</span></li>`)
+    .join('');
+}
 
   function connectSSE() {
     const sse = new EventSource('/stream');
