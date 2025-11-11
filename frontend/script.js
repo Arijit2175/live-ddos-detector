@@ -29,11 +29,30 @@
 
   scene.add(Globe);
 
-  const ambientLight = new THREE.AmbientLight(0xffffff, 1.1);
-  const pointLight = new THREE.PointLight(0xffffff, 1.6);
-  camera.add(pointLight);
-  scene.add(ambientLight);
-  scene.add(camera);
+  const ambientLight = new THREE.AmbientLight(0xffffff, 0.5);
+scene.add(ambientLight);
+
+const directionalLight = new THREE.DirectionalLight(0xffffff, 1.2);
+directionalLight.position.set(100, 200, 300);
+scene.add(directionalLight);
+
+const atmosphereGeometry = new THREE.SphereGeometry(200, 64, 64);
+const atmosphereMaterial = new THREE.MeshPhongMaterial({
+  color: 0x3399ff,
+  transparent: true,
+  opacity: 0.08,
+  side: THREE.BackSide,
+});
+const atmosphere = new THREE.Mesh(atmosphereGeometry, atmosphereMaterial);
+atmosphere.scale.set(1.15, 1.15, 1.15);
+scene.add(atmosphere);
+
+camera.position.set(0, 120, 420);
+camera.lookAt(0, 0, 0);
+
+renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+renderer.shadowMap.enabled = true;
+renderer.shadowMap.type = THREE.PCFSoftShadowMap;
 
   window.addEventListener('resize', () => {
     renderer.setSize(container.clientWidth, container.clientHeight);
@@ -42,7 +61,7 @@
   });
 
   (function animate() {
-    Globe.rotation.y += 0.0008;
+    Globe.rotation.y += 0.0005;
     renderer.render(scene, camera);
     requestAnimationFrame(animate);
   })();
