@@ -16,3 +16,15 @@ This project aims to visualize global network threats in a visually appealing an
 
 ---
 
+## 🛠️ Tech Stack Used
+
+| Layer / Component | Technologies Used | Description |
+|------------------|-------------------|-------------|
+| **Model Development & Training** | **Python**, NumPy, Pandas, Scikit-Learn / TensorFlow / PyTorch *(based on your project)* | Used to define, train, and evaluate the machine-learning model for detecting cyberattacks (including DDoS). |
+| **Backend / API Server** | **Flask (Python)** | Serves the trained model, exposes prediction APIs, handles requests from the dashboard. |
+| **Frontend (Dashboard UI)** | **HTML**, **CSS**, **JavaScript** | Builds the main user interface dashboard for visualizing predictions, logs, alerts, and attack insights. |
+| **3D Visualization** | **Three.js (3JS)** | Used for rendering the interactive 3D globe on the dashboard to visualize incoming attack traffic. |
+| **Data Handling & Visualization** | Chart.js / D3.js *(if used)* | Used for graphs, charts, or additional visual analytics. |
+
+---
+
