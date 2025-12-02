@@ -196,3 +196,17 @@ Only test the detection system in:
 
 ---
 
+## 📚 References
+
+- [Flask Documentation](https://flask.palletsprojects.com/) – Official documentation for building the backend server.  
+- [Scikit-Learn Documentation](https://scikit-learn.org/stable/) – Used for machine learning model training and evaluation.  
+- [Three.js Documentation](https://threejs.org/docs/) – For 3D globe visualization on the dashboard.  
+- [Python Official Documentation](https://docs.python.org/3/) – Python language reference.  
+- Research papers and tutorials on DDoS and cyberattack detection:
+  - “A Survey on DDoS Attacks and Defense Mechanisms”  
+  - “Machine Learning Approaches for Intrusion Detection Systems”  
+- [Chart.js](https://www.chartjs.org/) / [D3.js](https://d3js.org/) – For dynamic graphs and analytics on the dashboard.  
+
+<br>
+
+**Developed by** - @Arijit2175
