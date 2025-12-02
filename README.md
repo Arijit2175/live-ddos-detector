@@ -183,3 +183,16 @@ The project can be extended and improved in several ways:
 
 ---
 
+## ⚠️ Caution
+
+This project is built strictly for **educational and research purposes**.  
+Do **NOT** test cyberattack detection by launching attacks on external servers, public networks, or any organization’s systems — this is illegal and unethical.
+
+Only test the detection system in:
+
+- A **local machine**
+- A **virtual machine (VM)**
+- A **controlled lab environment**
+
+---
+
