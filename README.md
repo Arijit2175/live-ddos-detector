@@ -41,3 +41,16 @@ The model was tested on a dataset of network traffic to measure its performance 
 
 ---
 
+## 🎛️ Dashboard Preview
+
+The dashboard provides a real-time visualization of network attacks:
+
+- **3D Globe**: Displays attack sources and intensity using Three.js.
+- **Attack Logs**: Real-time table of detected cyberattacks.
+- **Graphs & Charts**: Visual representation of attacks over time and types.
+- **Alerts**: Immediate notifications for high-risk events.
+
+![Dashboard Preview](assets/dashboard.png)
+
+---
+
