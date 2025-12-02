@@ -28,3 +28,16 @@ This project aims to visualize global network threats in a visually appealing an
 
 ---
 
+## 📊 Evaluation Metrics
+
+The model was tested on a dataset of network traffic to measure its performance in detecting attacks.  
+
+| Metric | Value |
+|--------|-------|
+| Accuracy | 71% |
+| Precision | 67% |
+| Recall | 67% |
+| F1-Score | 67% |
+
+---
+
