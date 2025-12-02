@@ -7,3 +7,12 @@ This project aims to visualize global network threats in a visually appealing an
 
 ---
 
+### 🎯 Objectives
+- Visualize real-time or simulated cyberattacks in a **3D world map**.
+- Show **source and target countries** dynamically connected by animated arcs.
+- Provide a **live statistics sidebar** with top sources, logs, and prevention tips.
+- Deliver a **smooth, modern, and responsive UI** optimized for performance.
+- Serve as a base for integrating **real threat intelligence feeds** in the future.
+
+---
+
