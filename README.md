@@ -54,3 +54,116 @@ The dashboard provides a real-time visualization of network attacks:
 
 ---
 
+## 🚀 How to Run the Project
+
+Follow these steps to start the system:
+
+1. **Clone the repository:**
+
+```
+git clone https://github.com/Arijit2175/Live-DDOS-Detector.git
+cd Live-DDOS-Detector
+```
+
+2. **Start the server:**
+
+```
+python server.py
+```
+
+⚠️ The detection system only works when the server is running. If the server is off, no attacks will be detected.
+
+3. **Open the dashboard:**
+Open the web browser and navigate to:
+*http://localhost:5000*
+The dashboard will appear
+
+Here’s a ready-to-use **README.md snippet** explaining how to work your project, with the workflow and steps clearly outlined:
+
+````md
+# Cyberattack Detection Dashboard
+
+A real-time cyberattack detection system that identifies attacks like DDoS and visualizes network activity on an interactive dashboard.
+
+---
+
+## 🚀 How to Run the Project
+
+Follow these steps to start the system:
+
+1. **Clone the repository:**
+
+```bash
+git clone https://github.com/yourusername/cyberattack-dashboard.git
+cd cyberattack-dashboard
+````
+
+2. **Start the server:**
+
+* Open a terminal and run:
+
+```bash
+python server.py
+```
+
+> ⚠️ The detection system only works when the server is running. If the server is off, no attacks will be detected.
+
+3. **Open the dashboard:**
+
+* Open your web browser and navigate to:
+
+```
+http://localhost:5000
+```
+
+* The dashboard will appear.
+
+---
+
+## 🖥️ What Happens
+
+* **Attack Prediction Model:**
+  Runs automatically when the server starts and continuously monitors network traffic.
+
+* **Packet Transfers Visualization:**
+
+  * Normal and unusual network packets are displayed on a 3D globe using Three.js.
+  * Any unusual or suspicious packet transfers are logged and shown in the **logs** section.
+
+* **Graphs & Analytics:**
+
+  * Real-time graphs show network activity trends.
+  * Attack types and intensities are updated dynamically on the dashboard.
+
+---
+
+## 📝 Project Structure
+
+```
+Live-DDOS-Detector
+│
+├── backend/
+     ├── detect_live.py
+     ├── features.py
+     ├── server.py
+     ├── train_model.py
+├── data
+     ├── alerts.jsonl
+     ├── datasets
+├── frontend
+     ├── index.html
+     ├── style.css
+     ├── script.js
+├── models
+├── scripts
+     ├── capture.py
+     ├── traffic_gen_http.py
+     ├── traffic_gen_udp_tcp.py
+├── tools
+     ├── append_alerts.py
+├── requirements.txt
+└── README.md 
+```
+
+---
+
