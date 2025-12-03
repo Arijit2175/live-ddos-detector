@@ -50,7 +50,7 @@ The dashboard provides a real-time visualization of network attacks:
 - **Graphs & Charts**: Visual representation of attacks over time and types.
 - **Alerts**: Immediate notifications for high-risk events.
 
-![Dashboard Preview](assets/dashboard.png)
+![Dashboard Preview](assets/dashboard_preview.png)
 
 ---
 
