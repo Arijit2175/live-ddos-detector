@@ -10,4 +10,3 @@ data/*.db
 .ipynb_checkpoints/
 *.joblib
 scripts/merge_pcaps.py
-assets/
